@@ -1,0 +1,54 @@
+﻿@inject NavigationManager NavigationManager
+@inject HttpClient HttpClient
+
+<h3>User Informatino</h3>
+@if (response == null)
+{
+    <h1>Loading Please Wait...</h1>
+}
+else
+{    
+    <div class="card" style="width: 20rem;">
+  <img src="https://worthingtonmotorcycles.com.au/wp-content/uploads/2017/06/tlc-perth-user-icon-im2.png" class="card-img-top" alt="user profile">
+  <div class="card-body">
+    <h5 class="card-title">User Name: @response?.username</h5>
+    <h6 class="card-subtitle mb-2 text-muted">
+        This User is
+        @if(response?.email_verified=="true"){
+            <b>Verified</b>
+        }
+        else{
+             <b>Not Verified</b>
+        }
+    </h6>
+    <p class="card-text">Few user information like user email is <b>@response?.email</b> and user subject is <b>@response?.sub</b></p>        
+  </div>
+</div>    
+}
+
+@code {
+    public string? Token { get; set; }        
+    public UserResponse? response=new UserResponse();
+    protected override async Task OnInitializedAsync()
+    {       
+        Token = NavigationManager.Uri.ToString().Split("#")[1].Split("&")[1].Replace("access_token=", "");
+        if (Token != "")
+        {
+            var request = new HttpRequestMessage(HttpMethod.Get, "https://userwebapplication.auth.us-west-1.amazoncognito.com/oauth2/userInfo");
+            // add authorization header
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer",Token);                
+            // send request
+            using var httpResponse = await HttpClient.SendAsync(request);
+            // convert http response data to UsersResponse object
+            try
+            {            
+                response = await httpResponse.Content.ReadFromJsonAsync<UserResponse>();            
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message.ToString());
+            }
+        }
+
+    }   
+}
